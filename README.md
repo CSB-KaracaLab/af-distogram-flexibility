@@ -60,21 +60,13 @@ numpy
 pandas
 ```
 
-`dist-calc-two-res.py` additionally needs **PyMOL**, which is not installable with pip.
-Either use the open-source build:
-
-```bash
-conda install -c conda-forge pymol-open-source
-```
-
-or run the script with the Python inside an existing PyMOL installation, e.g. on macOS
-`/Applications/PyMOL.app/Contents/bin/python3`.
-
-The other two scripts need only numpy and pandas:
-
 ```bash
 pip install -r requirements.txt
 ```
+
+`dist-calc-two-res.py` needs nothing at all beyond the standard library: it reads the
+coordinates from the PDB's own columns. numpy and pandas are only for
+`extract_distogram_pair.py`.
 
 ---
 
@@ -85,9 +77,8 @@ Extract pairwise distances for any residue pair (e.g., 230–233):
 python dist-calc-two-res.py --input_pdb /path/to/pdb --residue1 230 --residue2 233
 ```
 
-`--input_pdb` also takes a **directory**, which is walked recursively for `.pdb` files;
-PyMOL is started once and every structure measured in turn, which is how the tables in
-`data/pdb-distances/` were produced. The output carries the containing folder, so one call
+`--input_pdb` also takes a **directory**, which is walked recursively for `.pdb` files,
+which is how the tables in `data/pdb-distances/` were produced. The output carries the containing folder, so one call
 over a tree of ensembles keeps them apart:
 
 ```
