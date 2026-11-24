@@ -40,11 +40,17 @@ scripts/
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/CSB-KaracaLab/af-distogram-flexibility/blob/main/AF_distogram_Colab.ipynb)
 
-`AF_distogram_Colab.ipynb` works one case through end to end with nothing to install. It
-downloads the MIA40 ensembles from Zenodo, measures residues 7–10 across all 3,561
-deposited structures with the script below, **checks the result against the measurements
-deposited with the paper**, and puts that sampled spread next to the AlphaFold distogram
-for the same pair. Then it shows how to point the same three steps at your own system.
+`AF_distogram_Colab.ipynb` works the **AK2** case through end to end with nothing to
+install. AK2 hinges when AIFM1 binds it, and the hinge shows up as the Cβ–Cβ distance
+between residues 230 and 233: MD puts that at a median of 5.9 Å in the apo protein and
+10.0 Å in the complex.
+
+Everything the notebook predicts is of **AK2 alone**. It downloads the deposited apo
+ensembles from Zenodo, measures 230–233 across all 4,292 structures with the script below,
+**checks the result against the measurements deposited with the paper**, and then puts the
+sampled spread, the AlphaFold distogram and both MD references on one axis — so you can
+see how much of the bound state the distogram carries that the predicted coordinates
+never reach. Then it shows how to point the same three steps at your own system.
 
 ## 🧰 Requirements
 
