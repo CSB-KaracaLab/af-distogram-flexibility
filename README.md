@@ -1,5 +1,7 @@
 <img src="logo.png" alt="AF-distogram Logo" width="600"/>
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/CSB-KaracaLab/af-distogram-flexibility/blob/main/AF_distogram_Colab.ipynb)
+
 
 Here we explore **flexibility signals** embedded in **AlphaFold distograms**, with a special focus on **predicting binding-induced hinge motion** interpretation.  
 
@@ -23,6 +25,8 @@ data*/
 ├── msas/                                     # MSA files (.a3m) used in distogram generation
 ├── MD/                                       # Molecular dynamics based reference distances
 
+AF_distogram_Colab.ipynb                      # Worked example in Colab, no install needed
+
 scripts/
 ├── dist-calc-two-res.py                      # Extracts pairwise distances from PDB files
 ├── extract_distogram_pair.py                 # Extracts pairwise distograms from .pkl, .pickle or .npz files
@@ -32,6 +36,16 @@ scripts/
 
 \** Each csv file comes with a corresponding txt file providing a description of the run parameters for each data.
   
+## ▶️ Run it in Colab
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/CSB-KaracaLab/af-distogram-flexibility/blob/main/AF_distogram_Colab.ipynb)
+
+`AF_distogram_Colab.ipynb` works one case through end to end with nothing to install. It
+downloads the MIA40 ensembles from Zenodo, measures residues 7–10 across all 3,561
+deposited structures with the script below, **checks the result against the measurements
+deposited with the paper**, and puts that sampled spread next to the AlphaFold distogram
+for the same pair. Then it shows how to point the same three steps at your own system.
+
 ## 🧰 Requirements
 
 ```
@@ -65,6 +79,15 @@ Extract pairwise distances for any residue pair (e.g., 230–233):
 python dist-calc-two-res.py --input_pdb /path/to/pdb --residue1 230 --residue2 233
 ```
 
+`--input_pdb` also takes a **directory**, which is walked recursively for `.pdb` files;
+PyMOL is started once and every structure measured in turn, which is how the tables in
+`data/pdb-distances/` were produced. The output carries the containing folder, so one call
+over a tree of ensembles keeps them apart:
+
+```
+python dist-calc-two-res.py --input_pdb MIA40/ --residue1 7 --residue2 10
+```
+
 One row is written per model, so a multi-model PDB — an ensemble, or frames taken from a
 trajectory — gives a distance distribution rather than a single number. Measurements are
 taken between CB atoms by default; glycine has no CB, so a pair involving one has to be
@@ -90,7 +113,16 @@ Create perturbed MSAs using AFsample2 output pickle files:
 python column_masking.py --msa_file path/to/input.msa.a3m --pkl_file path/to/afsample2_output.pkl
 ```
 
-The indices in the pickle are alignment columns of the query. Lowercase letters in an .a3m
+The pickle is an **AFsample2 output**: AFsample2 chooses the columns during its run and
+records them under `X_msa_indexes`, and this script replays that choice onto the
+alignment. If you do not have one — no pickle is deposited with this repository — give the
+columns directly instead, as a list or a file of indices, one per line:
+
+```
+python column_masking.py --msa_file path/to/input.a3m --columns 12,45,78
+```
+
+The indices in either case are alignment columns of the query. Lowercase letters in an .a3m
 are insertions and occupy no alignment column, so they are skipped when the columns are
 located in each row; the query sequence and any `#` header line are passed through
 unchanged. Gaps falling in a masked column are left as gaps unless `--mask_gaps` is given.

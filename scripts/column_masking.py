@@ -49,6 +49,21 @@ def extract_pattern_from_pkl(pkl_path):
     return [int(c) for c in columns]
 
 
+def read_columns(spec):
+    """Column indices given directly: a comma-separated list, or a file of them.
+
+    AFsample2's pickle is the usual source, but it is not the only way to pick columns,
+    and a pickle is not always kept alongside the alignment it was produced from.
+    """
+    path = Path(spec)
+    text = path.read_text() if path.is_file() else spec
+    tokens = text.replace(",", " ").split()
+    try:
+        return [int(tok) for tok in tokens]
+    except ValueError as bad:
+        raise SystemExit(f"--columns: expected whole numbers, got {bad}")
+
+
 def match_column_offsets(seq):
     """Where each alignment column sits in this row's string.
 
@@ -94,6 +109,10 @@ def main():
                         help="Path to the AFsample2 .pkl holding X_msa_indexes")
     parser.add_argument("--msa_file", help="Path to the input .a3m MSA file")
     parser.add_argument("--pkl_file", help="Path to the AFsample2 .pkl file")
+    parser.add_argument("--columns",
+                        help="Mask these query columns instead of reading a pickle: "
+                             "a comma-separated list (12,45,78) or a file of indices, "
+                             "one per line. 0-based, like AFsample2's own.")
     parser.add_argument("--output", help="Output .a3m (default: <pkl stem>_perturbed_msa.a3m)")
     parser.add_argument("--mask_gaps", action="store_true",
                         help="Also turn gaps in a masked column into X (default: leave gaps)")
@@ -101,13 +120,21 @@ def main():
 
     msa_file = args.msa_file or args.msa_positional
     pkl_file = args.pkl_file or args.pkl_positional
-    if not msa_file or not pkl_file:
-        parser.error("give an MSA and a pickle, either positionally or with "
-                     "--msa_file/--pkl_file")
+    if not msa_file:
+        parser.error("give an MSA, either positionally or with --msa_file")
+    if not pkl_file and not args.columns:
+        parser.error("say which columns to mask: --pkl_file from an AFsample2 run, "
+                     "or --columns with the indices themselves")
 
-    columns = extract_pattern_from_pkl(pkl_file)
-    if not columns:
-        print(f"Warning: no X_msa_indexes in {pkl_file}; the MSA will come out unchanged.")
+    if args.columns:
+        columns = read_columns(args.columns)
+        source = args.columns
+    else:
+        columns = extract_pattern_from_pkl(pkl_file)
+        source = pkl_file
+        if not columns:
+            print(f"Warning: no X_msa_indexes in {pkl_file}; "
+                  "the MSA will come out unchanged.")
 
     comment, records = read_a3m(msa_file)
     if not records:
@@ -121,7 +148,8 @@ def main():
               f"(first one: {out_of_range[0]}). Is this the MSA that AFsample2 ran on?")
 
     perturbed, masked = apply_perturbation(records, columns, mask_gaps=args.mask_gaps)
-    output = args.output or f"{os.path.splitext(os.path.basename(pkl_file))[0]}_perturbed_msa.a3m"
+    stem = os.path.splitext(os.path.basename(source))[0]
+    output = args.output or f"{stem}_perturbed_msa.a3m"
     write_a3m(output, comment, perturbed)
 
     print(f"{len(records)} sequences, query has {query_columns} alignment columns")
