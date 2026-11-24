@@ -21,7 +21,7 @@ data*/
 ├── distograms**/                             # Generated pairwise distograms for our case set, including AK2, IL1R1, MIA40, and EIF2B3.
 ├── pdb-distances**/                          # Calculated pairwise distance measurements.
 ├── msas/                                     # MSA files (.a3m) used in distogram generation
-├── md/                                       # Molecular dynamics based reference distances
+├── MD/                                       # Molecular dynamics based reference distances
 
 scripts/
 ├── dist-calc-two-res.py                      # Extracts pairwise distances from PDB files
@@ -32,18 +32,56 @@ scripts/
 
 \** Each csv file comes with a corresponding txt file providing a description of the run parameters for each data.
   
+## 🧰 Requirements
+
+```
+python >= 3.8
+numpy
+pandas
+```
+
+`dist-calc-two-res.py` additionally needs **PyMOL**, which is not installable with pip.
+Either use the open-source build:
+
+```bash
+conda install -c conda-forge pymol-open-source
+```
+
+or run the script with the Python inside an existing PyMOL installation, e.g. on macOS
+`/Applications/PyMOL.app/Contents/bin/python3`.
+
+The other two scripts need only numpy and pandas:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
 **Calculate custom pairwise distances**
 
-Extract pairwise distance distributions for any residue pair (e.g., 230–233):
+Extract pairwise distances for any residue pair (e.g., 230–233):
 ```
 python dist-calc-two-res.py --input_pdb /path/to/pdb --residue1 230 --residue2 233
 ```
 
+One row is written per model, so a multi-model PDB — an ensemble, or frames taken from a
+trajectory — gives a distance distribution rather than a single number. Measurements are
+taken between CB atoms by default; glycine has no CB, so a pair involving one has to be
+measured on CA with `--atom CA`. Use `--chain1` / `--chain2` for an inter-chain pair and
+`--state` to pick a single model.
+
 **Retrieve custom pairwise distograms**
-Extract pairwise distograms for any residue pair (e.g., 230–233), and supports .npz, .pickle, and .pkl file formats.
+
+Extract pairwise distograms for any residue pair (e.g., 230–233), from .npz, .pickle and
+.pkl files:
 ```
 python extract_distogram_pair.py --input_pickle /path/to/pickle 230 233
 ```
+
+Residue numbers are 1-based and index the distogram directly. For a **complex** the
+distogram runs over the chains concatenated, so a residue number taken from the second
+chain is not its index here — add the length of the preceding chains first.
 
 **Generate Perturbed MSAs for AF3sample2 pipeline**
 
@@ -51,6 +89,19 @@ Create perturbed MSAs using AFsample2 output pickle files:
 ```
 python column_masking.py --msa_file path/to/input.msa.a3m --pkl_file path/to/afsample2_output.pkl
 ```
+
+The indices in the pickle are alignment columns of the query. Lowercase letters in an .a3m
+are insertions and occupy no alignment column, so they are skipped when the columns are
+located in each row; the query sequence and any `#` header line are passed through
+unchanged. Gaps falling in a masked column are left as gaps unless `--mask_gaps` is given.
+
+> Each script also accepts its arguments positionally, as earlier versions did.
+
+**Reproducing the deposited tables**
+
+The CSVs under `data/distograms/` and `data/pdb-distances/` collect many runs into one
+file — one column per prediction, or one row per structure. The scripts here produce a
+single pair from a single file; the per-case tables were assembled from many such calls.
 
 **🧠 Citing This Work**
 
